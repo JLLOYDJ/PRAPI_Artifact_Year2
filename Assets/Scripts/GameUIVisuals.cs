@@ -7,12 +7,7 @@ public class GameUIVisuals : MonoBehaviour
 {
     public static Canvas uiInstance;
     private string playerSteamUsername;
-    private int playerAvatarID;
-    private Texture2D playerImage;
-    private bool playerAvatarBool;
-    private UInt32 widthAvatar;
-    private UInt32 heightAvatar;
-
+    // This is needed in order to grab the UI within the level to be used in the world.
     private void Awake()
     {
         uiInstance = gameObject.GetComponent<Canvas>();
@@ -26,18 +21,9 @@ public class GameUIVisuals : MonoBehaviour
             // This grabs the player name via "PersonaName", the other option Nickname is Depreciated.
             playerSteamUsername = SteamFriends.GetPersonaName();
             UpdateName(playerSteamUsername);
-
-            // Function to get the Texture 2D in order to pass it to the in game implementation.
-            // To passthrough the avatar/image
-            playerAvatarID = SteamFriends.GetLargeFriendAvatar(SteamUser.GetSteamID());
-
-            playerImage = GetSteamImage(playerAvatarID);
-
             
-
-            uiInstance.GetComponentInChildren<Image>().overrideSprite = Sprite.Create(playerImage, new Rect(0, 0, playerImage.width, playerImage.height), new Vector2(playerImage.width / 2, playerImage.height / 2));
-            // Rotating the Image to ensure it is the right way up.
-            uiInstance.GetComponentInChildren<Image>().transform.rotation = new Quaternion(180.0f, 0.0f, 0.0f, 0.0f);
+            // This activates the function that does all the processes in order to update the profile picture.
+            GetSteamImage();
         }
     }
 
@@ -50,29 +36,39 @@ public class GameUIVisuals : MonoBehaviour
     void UpdateName(string name)
     {
         gameObject.GetComponentInChildren<Text>().text = name;
-    }
+    } 
 
-    Texture2D GetSteamImage(int iImage)
+    // This function processes all the required dependances in order to output the user's profile picture to the UI. (Public allows the button to reuse this)
+    void GetSteamImage()
     {
-        Texture2D ret = null;
+        // This bypasses the 
+        Texture2D userAvatarTexture = null;
         uint ImageWidth;
         uint ImageHeight;
-        bool IsValid = SteamUtils.GetImageSize(iImage, out ImageWidth, out ImageHeight);
+        // Removed from the core start function and brought it into the function.
+        int playerAvatarID = SteamFriends.GetLargeFriendAvatar(SteamUser.GetSteamID());
+        bool IsValid = SteamUtils.GetImageSize(playerAvatarID, out ImageWidth, out ImageHeight);
 
         if (IsValid)
         {
             byte[] Image = new byte[ImageWidth * ImageHeight * 4];
 
-            IsValid = SteamUtils.GetImageRGBA(iImage, Image, (int)(ImageWidth * ImageHeight * 4));
+            IsValid = SteamUtils.GetImageRGBA(playerAvatarID, Image, (int)(ImageWidth * ImageHeight * 4));
 
             if (IsValid)
             {
-                ret = new Texture2D((int)ImageWidth, (int)ImageHeight, TextureFormat.RGBA32, false, true);
-                ret.LoadRawTextureData(Image);
-                ret.Apply();
+                userAvatarTexture = new Texture2D((int)ImageWidth, (int)ImageHeight, TextureFormat.RGBA32, false, true);
+                userAvatarTexture.LoadRawTextureData(Image);
+                userAvatarTexture.Apply();
+
+                // Converting to Sprite for UI (Creating a new Sprite First)
+                Sprite avatarSprite = Sprite.Create(userAvatarTexture, new Rect(0, 0, userAvatarTexture.width, userAvatarTexture.height), new Vector2(userAvatarTexture.width / 2, userAvatarTexture.height / 2));
+                // Overrides the UI Sprite currently in the level with the new texture (Now converted to Sprite) version
+                uiInstance.GetComponentInChildren<Image>().overrideSprite = avatarSprite;
+                // This rotates the image by 180.0f on the X axis as it is flipped when left on default.
+                uiInstance.GetComponentInChildren<Image>().transform.rotation = new Quaternion(180.0f, 0.0f, 0.0f, 0.0f);
             }
         }
-        return ret;
 
     }
 }

@@ -1,5 +1,6 @@
 using UnityEngine;
-using Steamworks; // To have access to the manager in order to create it without requiring it in the scene.
+using Steamworks;
+using System; // To have access to the manager in order to create it without requiring it in the scene.
 
 public class GameManager : MonoBehaviour
 {
@@ -55,5 +56,22 @@ public class GameManager : MonoBehaviour
     void Update()
     {
         
+    }
+
+    public void AchievementUpdate(int AchievementID)
+    {
+        // Variables needed in order to output the Debug.Log
+        bool trueOrFalseTest;
+        string achievementAPIName;
+        // This takes the int and converts it to uint for the GetAchievementName
+        uint UAchievementID = Convert.ToUInt32(AchievementID);
+        // Grabs the API Name for other functions to work.
+        achievementAPIName = SteamUserStats.GetAchievementName(UAchievementID);
+        // This grabs the Name for the Display/User Side (But can also do Description with "desc" and Hidden for hidden achievements)
+        string achievementDisplayName = SteamUserStats.GetAchievementDisplayAttribute(achievementAPIName, "name");
+        // This checks if the achievement has been unlocked or not.
+        SteamUserStats.GetAchievement(achievementAPIName, out trueOrFalseTest);
+        // Outputs the result.s
+        Debug.Log(achievementDisplayName + ": " + trueOrFalseTest);
     }
 }

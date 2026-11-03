@@ -7,19 +7,19 @@ public class PlayerMovement : MonoBehaviour
     [Header("Movement Settings")]
     [SerializeField] private float moveSpeed = 2.0f;
     
-    private Rigidbody2D rb;
-    private Vector2 moveInput;
+    private Rigidbody2D _rb;
+    private Vector2 _moveInput;
     
     // This makes sure that the Awake is unable to be tampered with externally.
     private void Awake()
     {
-        rb = GetComponent<Rigidbody2D>();
+        _rb = GetComponent<Rigidbody2D>();
     }
 
     // This gets called automatically when the player inputs something using Move.
     public void OnMove(InputValue value)
     {
-        moveInput = value.Get<Vector2>();
+        _moveInput = value.Get<Vector2>();
     }
     
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -32,8 +32,8 @@ public class PlayerMovement : MonoBehaviour
     private void FixedUpdate()
     {
         // This multiplies the input via the movespeed which will propel where the player wants to go.
-        Vector2 velocity = moveInput.normalized * moveSpeed;
+        Vector2 velocity = _moveInput.normalized * moveSpeed;
         // This applies it to the 2D Rigidbody.
-        rb.linearVelocity = velocity;
+        _rb.linearVelocity = velocity;
     }
 }

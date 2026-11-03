@@ -5,12 +5,33 @@ using System;
 
 public class GameUIVisuals : MonoBehaviour
 {
+    // Making the GameUIVisuals a Singleton
+    public static GameUIVisuals uiVisualsInstance;
     public static Canvas uiInstance;
-    private string playerSteamUsername;
+    // This is to have the DebugLog stuff be replaced with it updating on the UI.
+    private static GameObject _outputLogInstance;
+    // This is to prevent a potential issue with the Username not updating due to grabbing the wrong text.
+    private static GameObject _userNameInstance;
     // This is needed in order to grab the UI within the level to be used in the world.
     private void Awake()
     {
+        // Reused code from GameManager in order to make this a singleton.
+        if (uiVisualsInstance == null)
+        {
+            uiVisualsInstance = this;
+            // This here allows the Manager to not be destroyed on Load of a Scene.
+            DontDestroyOnLoad(gameObject);
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+
         uiInstance = gameObject.GetComponent<Canvas>();
+        // This searches the entire scene to find the first object with the attached Tag.
+        _outputLogInstance = GameObject.FindWithTag("UILog");
+        // This does same as above but for the Username section.
+        _userNameInstance = GameObject.FindWithTag("UIUsername");
     }
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -25,6 +46,8 @@ public class GameUIVisuals : MonoBehaviour
             // This activates the function that does all the processes in order to update the profile picture.
             GetSteamImage();
         }
+        // Testing Purposes.
+        UpdateLog("Testing 123");
     }
 
     // Update is called once per frame
@@ -36,7 +59,8 @@ public class GameUIVisuals : MonoBehaviour
     public void UpdateName()
     {
         string playerSteamUsername = SteamFriends.GetPersonaName();
-        gameObject.GetComponentInChildren<Text>().text = playerSteamUsername;
+        _userNameInstance.gameObject.GetComponent<Text>().text = playerSteamUsername;
+        UpdateLog($"Steam Username Updated: " + playerSteamUsername);
     } 
 
     // This function processes all the required dependances in order to output the user's profile picture to the UI. (Public allows the button to reuse this)
@@ -75,5 +99,12 @@ public class GameUIVisuals : MonoBehaviour
             }
         }
 
+    }
+
+    // This function is to passthrough the string and output it to the UI instead of the Debug Log like before.
+    public void UpdateLog(string desc)
+    {
+        // Using the Tag reference, it is able to grab the component of text and update it with the passed through description.
+        _outputLogInstance.gameObject.GetComponent<Text>().text = desc;
     }
 }

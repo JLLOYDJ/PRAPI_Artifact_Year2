@@ -1,6 +1,7 @@
+using NUnit.Framework.Internal;
 using Steamworks;
 using System; // To have access to the manager in order to create it without requiring it in the scene.
-using Unity.IO.LowLevel.Unsafe;
+//using Unity.IO.LowLevel.Unsafe;
 using UnityEngine;
 
 public class GameManager : MonoBehaviour
@@ -137,7 +138,7 @@ public class GameManager : MonoBehaviour
     }
     
     // Not Working At the moment. Will delve deeper into Monday/Tuesday next week.
-    public void AchievementStatChange (int AchievementID, bool IsIncreasing)
+    public void AchievementStatChange (int AchievementID)
     {
         string APIName;
         string StatName;
@@ -147,11 +148,15 @@ public class GameManager : MonoBehaviour
         int amountAdjustmentI = 1;
         bool IsFloat = false;
         uint maximumRange;
+        uint currentFinalisedStat; // Used to bring both Int and Float to a unified code.
 
-        // Steam Documentation has a Step-by-Step for Stats.
-        //SteamUserStats.GetAchievementProgressLimits(APIName, out minimumRange, out maximumRange);
+        // Steam Documentation has a Step-by-Step for Stats. This has only returned 0's everytime. This is showing a false meaning something isn't working correctly.
+        // Not even in Steam Doucmentation for this section below. Checked on Steamworks.NET, this comes up as "Open" and no updates, just that it isn't working.
+        // From what it seems, this function is unable to request this from Steam, which is not ideal and will have to look into a hard/coded in here method.
+        //bool working = SteamUserStats.GetAchievementProgressLimits(APIName, out minimumRange, out maxitest);
         // Despite the 100 games, it doesn't have an attached range, so the range will be done manually.
-        //Debug.Log(maximumRange);
+        //Debug.Log(maxitest);
+        //Debug.Log(working);
 
 
         // This section here is to assign the stat API Name in order to change stat levels.
@@ -185,65 +190,47 @@ public class GameManager : MonoBehaviour
         }*/
         
 
-        if (IsFloat)
-        {
+        if (IsFloat) // This section has been updated to only do the calculations side before going to the following code for stat checks then finalising stat changes.
+        { // This was due to both sides having diverting code, so to make it more modular and easier to maintain, I was able to seperate it using a new variable "currentFinalisedStat"
             float currentStat;
             SteamUserStats.GetStat(StatName, out currentStat);
-            if (IsIncreasing)
-                currentStat += amountAdjustmentF;
-            else
-                currentStat -= amountAdjustmentF;
-
-
-            if (currentStat < maximumRange)
-            {
-                Debug.Log("Within Range of Achievement Stat");
-                
-            }
-            else if (currentStat == maximumRange)
-            {
-                AchievementUnlocker(AchievementID);
-                Debug.Log("Achievement Unlocked Via Stats");
-            }
+            currentStat += amountAdjustmentF;
+            // Moved Here since it was causing issues for int section.
             SteamUserStats.SetStat(StatName, currentStat);
-            GameUIVisuals.uiVisualsInstance.UpdateLog(achievementDisplayName + "\nNew Stat: " + currentStat);
+
+            currentFinalisedStat = Convert.ToUInt32(currentStat);
         }
         else
         {
             int currentStat;
-            bool test = SteamUserStats.GetStat(StatName, out currentStat);
-            Debug.Log(test);
-            if (IsIncreasing)
-                currentStat += amountAdjustmentI;
-            else
-                currentStat -= amountAdjustmentI;
+            SteamUserStats.GetStat(StatName, out currentStat);
+            currentStat += amountAdjustmentI;
+            // Moved Here since it was causing issues for int section.
+            SteamUserStats.SetStat(StatName, currentStat);
 
-            // This is useless
-            if (currentStat < maximumRange)
-            {
-                Debug.Log("Within Range of Achievement Stat");
-
-            }
-            test = SteamUserStats.SetStat(StatName, currentStat);
-            if ((currentStat % (maximumRange / 10)) == 0)
-            {
-                SteamUserStats.IndicateAchievementProgress(APIName, Convert.ToUInt32(currentStat), maximumRange);
-            }
-            Debug.Log(test);
-            GameUIVisuals.uiVisualsInstance.UpdateLog(achievementDisplayName + "\nNew Stat: " + currentStat);
+            currentFinalisedStat = Convert.ToUInt32(currentStat);
         }
-        
+
+        // The new Seperated Code for the Stat system
+        if (maximumRange == currentFinalisedStat)
+        {
+            AchievementUnlocker(AchievementID);
+        }
+        else if (maximumRange < currentFinalisedStat) // This is here for the achievements that are unable to be 
+        {
+            GameUIVisuals.uiVisualsInstance.UpdateLog(achievementDisplayName + "\nAchievement Already Unlocked\nNew Stat Increase: " + currentFinalisedStat);
+        }
+        else if ((currentFinalisedStat % (Convert.ToInt32(maximumRange) / 10)) == 0)
+        {
+            SteamUserStats.IndicateAchievementProgress(APIName, currentFinalisedStat, maximumRange);
+            GameUIVisuals.uiVisualsInstance.UpdateLog(achievementDisplayName + "\nMilestone hit!\n New Stat Increase: " + currentFinalisedStat);
+        }
+        else
+        {
+            GameUIVisuals.uiVisualsInstance.UpdateLog(achievementDisplayName + "\nNew Stat Increase: " + currentFinalisedStat);
+        }
+
         SteamUserStats.StoreStats();
-    }
-
-    public void AchievementStatIncrease(int AchievementID)
-    {
-        AchievementStatChange(AchievementID, true);
-    }
-
-    public void AchievementStatDecrease(int AchievementID)
-    {
-        AchievementStatChange(AchievementID, false);
     }
 
     public void AchievementStatReset()

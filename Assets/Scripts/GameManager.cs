@@ -169,32 +169,6 @@ public class GameManager : MonoBehaviour
         AchievementStatReference(AchievementID, out StatName, out IsFloat, out maximumRange);
         
 
-
-        // Defuncted Version of the Stat System
-        /*
-        for (int i = 0; i < floatAchievementIDs.GetLength(0); i++)
-        {
-            if (floatAchievementIDs[i] == AchievementID)
-            {
-                IsFloat = true;
-                FoundType = true;
-                i = floatAchievementIDs.GetLength(0) + 1;
-            }
-        }
-        if (FoundType != true)
-        {
-            for (int i = 0; i < floatAchievementIDs.GetLength(0); i++)
-            {
-                if (intAchievementIDs[i] == AchievementID)
-                {
-                    IsFloat = false;
-                    FoundType = true;
-                    i = intAchievementIDs.GetLength(0) + 1;
-                }
-            }
-        }*/
-        
-
         if (IsFloat) // This section has been updated to only do the calculations side before going to the following code for stat checks then finalising stat changes.
         { // This was due to both sides having diverting code, so to make it more modular and easier to maintain, I was able to seperate it using a new variable "currentFinalisedStat"
             float currentStat;

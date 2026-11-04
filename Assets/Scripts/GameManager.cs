@@ -60,6 +60,11 @@ public class GameManager : MonoBehaviour
         
     }
 
+    public void QuitGame()
+    {
+        Application.Quit();
+    }
+
     // This grabs the API Name (But also with an extra update since all achievement stuff I'm doing so far needs the name)
     // Using the "Out" within the brackets, it allows for multiple returns.
     private void AchievementGetter(int AchievementID, out string APIName, out string AchiName)
